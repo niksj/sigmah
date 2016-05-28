@@ -77,6 +77,8 @@ public class ImportDetails extends BaseModel implements Serializable, DTO {
 	 * @return the keyIdentification
 	 */
 	public String getKeyIdentification() {
+		//for #798 Add a type filter on fields for importation identification key
+		//if(keyIdentification!=budget)
 		return keyIdentification;
 	}
 
