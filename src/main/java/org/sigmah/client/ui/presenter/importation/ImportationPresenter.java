@@ -357,6 +357,7 @@ public class ImportationPresenter extends AbstractPagePresenter<ImportationPrese
 					ImportDetails toBeRemoved = null;
 					for(final ImportDetails importDetails : store.getModels()) {
 						// TODO: KeyIdentification may be something other than the code.
+						//Type filter on fields for identification key is to be added 
 						if(project.getName().equals(importDetails.getKeyIdentification()) &&
 							project.getProjectModel().getName().equals(importDetails.getModelName())) {
 							toBeRemoved = importDetails;
