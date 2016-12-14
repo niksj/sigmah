@@ -24,6 +24,7 @@ package org.sigmah.client.ui.presenter.project;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,11 +59,8 @@ import org.sigmah.shared.dto.ProjectDTO;
 import org.sigmah.shared.dto.ProjectFundingDTO;
 import org.sigmah.shared.dto.ProjectFundingDTO.LinkedProjectType;
 import org.sigmah.shared.dto.country.CountryDTO;
-import org.sigmah.shared.dto.element.BudgetElementDTO;
-import org.sigmah.shared.dto.element.BudgetSubFieldDTO;
 import org.sigmah.shared.dto.element.FlexibleElementDTO;
 import org.sigmah.shared.dto.referential.ProjectModelType;
-import org.sigmah.shared.util.ValueResultUtils;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.extjs.gxt.ui.client.data.ModelData;
@@ -83,6 +81,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.sigmah.shared.command.UpdateEntity;
 import org.sigmah.shared.command.result.VoidResult;
+import org.sigmah.shared.dto.ProjectModelDTO;
+import org.sigmah.shared.dto.element.BudgetRatioElementDTO;
 
 /**
  * Linked project (funding/funded) presenter which manages the {@link LinkedProjectView}.
@@ -333,7 +333,12 @@ public class LinkedProjectPresenter extends AbstractPagePresenter<LinkedProjectP
 			throw new IllegalArgumentException("Invalid parent project data.");
 		}
 
-		findPlannedBudget(parentProject);
+		try {
+			findPlannedBudget(parentProject);
+		} catch (UnsupportedOperationException e) {
+			Log.error("An error happend while searching for the planned budget of the project #" + parentProject.getId(), e);
+			hideView();
+		}
 
 		// --
 		// Retrieving edited linked project (not present for selection).
@@ -389,36 +394,39 @@ public class LinkedProjectPresenter extends AbstractPagePresenter<LinkedProjectP
 	 * 
 	 * @param parentProject
 	 *          The parent project.
+	 * @throws UnsupportedOperationException If the project model has 0 or more than 1 budget ratio element 
+	 * or if the planned budget element of the budget ratio element is <code>null</code>.
 	 */
-	private void findPlannedBudget(final ProjectDTO parentProject) {
+	private void findPlannedBudget(final ProjectDTO parentProject) throws UnsupportedOperationException {
 
 		plannedBudget = null;
-		BudgetElementDTO budgetElementDTO = null;
+		final List<ProjectModelDTO.LocalizedElement<BudgetRatioElementDTO>> budgetRatioElements = parentProject.getProjectModel().getLocalizedElements(BudgetRatioElementDTO.class);
 
-		// Retrieves budget element.
-		for (final FlexibleElementDTO flexibleElement : parentProject.getProjectModel().getGlobalExportElements()) {
-			if (flexibleElement instanceof BudgetElementDTO) {
-				budgetElementDTO = (BudgetElementDTO) flexibleElement;
-			}
+		// To be modified with budget functionnalities
+		if (budgetRatioElements == null) {
+			throw new UnsupportedOperationException("No budget ratio element have been found into parent project.");
 		}
 
-		if (budgetElementDTO == null) {
-			// TODO What should we do when no budget element has been found into parent project ?
-			throw new UnsupportedOperationException("No budget element has been found into parent project.");
+		if (budgetRatioElements.size() != 1) {
+			// TODO: What should we do when 0 or more than 1 budget element ratio has been found into parent project ?
+			throw new UnsupportedOperationException(budgetRatioElements.size() + " budget ratio element(s) have been found into parent project.");
 		}
 
-		final BudgetSubFieldDTO plannedBudgetField = budgetElementDTO.getPlannedBudget();
+		final BudgetRatioElementDTO budgetRatioElement = budgetRatioElements.get(0).getElement();
+		final FlexibleElementDTO plannedBudgetField = budgetRatioElement.getPlannedBudget();
+		
+		if (plannedBudgetField == null) {
+			throw new UnsupportedOperationException("The planned budget element has not be configured for the budget ratio element #" + budgetRatioElement.getId() + ".");
+		}
 
 		// Retrieves the budget element corresponding value.
-		dispatch.execute(new GetValue(parentProject.getId(), budgetElementDTO.getId(), budgetElementDTO.getEntityName()), new CommandResultHandler<ValueResult>() {
+		dispatch.execute(new GetValue(parentProject.getId(), plannedBudgetField.getId(), plannedBudgetField.getEntityName()), new CommandResultHandler<ValueResult>() {
 
 			@Override
 			public void onCommandSuccess(final ValueResult result) {
 
-				final Map<Integer, String> values = ValueResultUtils.splitMapElements(result.getValueObject());
-
-				if (values.containsKey(plannedBudgetField.getId())) {
-					plannedBudget = Double.valueOf(values.get(plannedBudgetField.getId()));
+				if (result != null && result.isValueDefined()) {
+					plannedBudget = Double.valueOf(result.getValueObject());
 				}
 
 				if (linkedProject != null) {
@@ -434,9 +442,11 @@ public class LinkedProjectPresenter extends AbstractPagePresenter<LinkedProjectP
 	 */
 	private void loadProjects() {
 
-		final GetProjects command = new GetProjects();
+		final List<Integer> orgUnitsIdsAsList = auth().getOrgUnitIds() != null ?
+				new ArrayList<Integer>(auth().getOrgUnitIds()) : null;
+
+		final GetProjects command = new GetProjects(orgUnitsIdsAsList, ProjectDTO.Mode._USE_PROJECT_MAPPER);
 		command.setViewOwnOrManage(true);
-		command.setMappingMode(ProjectDTO.Mode._USE_PROJECT_MAPPER);
 
 		view.getProjectsField().getStore().removeAll();
 

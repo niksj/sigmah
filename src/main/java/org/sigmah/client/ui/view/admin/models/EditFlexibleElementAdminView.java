@@ -23,55 +23,7 @@ package org.sigmah.client.ui.view.admin.models;
  */
 
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.sigmah.client.i18n.I18N;
-import org.sigmah.client.ui.presenter.admin.models.EditFlexibleElementAdminPresenter;
-import org.sigmah.client.ui.res.icon.IconImageBundle;
-import org.sigmah.client.ui.view.base.AbstractPopupView;
-import org.sigmah.client.ui.widget.button.Button;
-import org.sigmah.client.ui.widget.button.ClickableLabel;
-import org.sigmah.client.ui.widget.form.FormPanel;
-import org.sigmah.client.ui.widget.form.Forms;
-import org.sigmah.client.ui.widget.form.TextButtonField;
-import org.sigmah.client.ui.widget.popup.PopupWidget;
-import org.sigmah.client.util.ClientUtils;
-import org.sigmah.client.util.EnumModel;
-import org.sigmah.shared.dto.PhaseModelDTO;
-import org.sigmah.shared.dto.base.EntityDTO;
-import org.sigmah.shared.dto.category.CategoryTypeDTO;
-import org.sigmah.shared.dto.element.BudgetSubFieldDTO;
-import org.sigmah.shared.dto.layout.LayoutGroupDTO;
-import org.sigmah.shared.dto.profile.PrivacyGroupDTO;
-import org.sigmah.shared.dto.referential.DefaultFlexibleElementType;
-import org.sigmah.shared.dto.referential.ElementTypeEnum;
-import org.sigmah.shared.dto.referential.TextAreaType;
-import org.sigmah.shared.dto.report.ReportModelDTO;
-
-import com.extjs.gxt.ui.client.data.BaseModelData;
-import com.extjs.gxt.ui.client.event.Events;
-import com.extjs.gxt.ui.client.event.FieldEvent;
-import com.extjs.gxt.ui.client.event.Listener;
-import com.extjs.gxt.ui.client.store.ListStore;
-import com.extjs.gxt.ui.client.widget.Text;
-import com.extjs.gxt.ui.client.widget.form.AdapterField;
-import com.extjs.gxt.ui.client.widget.form.CheckBox;
-import com.extjs.gxt.ui.client.widget.form.ComboBox;
-import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
-import com.extjs.gxt.ui.client.widget.form.DateField;
-import com.extjs.gxt.ui.client.widget.form.Field;
-import com.extjs.gxt.ui.client.widget.form.HtmlEditor;
-import com.extjs.gxt.ui.client.widget.form.LabelField;
-import com.extjs.gxt.ui.client.widget.form.NumberField;
-import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
-import com.extjs.gxt.ui.client.widget.form.TextField;
-import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
-import com.extjs.gxt.ui.client.widget.grid.ColumnData;
-import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
-import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -81,13 +33,57 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.inject.Singleton;
+import com.extjs.gxt.ui.client.data.BaseModelData;
+import com.extjs.gxt.ui.client.event.Events;
+import com.extjs.gxt.ui.client.event.FieldEvent;
+import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.store.ListStore;
+import com.extjs.gxt.ui.client.widget.Text;
+import com.extjs.gxt.ui.client.widget.form.*;
+import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
+import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
+import com.extjs.gxt.ui.client.widget.grid.ColumnData;
+import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
+import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
+
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.sigmah.client.i18n.I18N;
+import org.sigmah.client.ui.presenter.admin.models.EditFlexibleElementAdminPresenter;
+import org.sigmah.client.ui.res.icon.IconImageBundle;
+import org.sigmah.client.ui.view.base.AbstractPopupView;
 import org.sigmah.client.ui.widget.HasGrid;
+import org.sigmah.client.ui.widget.button.Button;
+import org.sigmah.client.ui.widget.button.ClickableLabel;
 import org.sigmah.client.ui.widget.form.ClearableField;
+import org.sigmah.client.ui.widget.form.FormPanel;
+import org.sigmah.client.ui.widget.form.Forms;
+import org.sigmah.client.ui.widget.form.ListComboBox;
+import org.sigmah.client.ui.widget.form.TextButtonField;
+import org.sigmah.client.ui.widget.popup.PopupWidget;
+import org.sigmah.client.util.ClientUtils;
 import org.sigmah.client.util.ColumnProviders;
+import org.sigmah.client.util.EnumModel;
 import org.sigmah.client.util.TypeModel;
+import org.sigmah.shared.dto.ContactModelDTO;
+import org.sigmah.shared.dto.PhaseModelDTO;
+import org.sigmah.shared.dto.base.EntityDTO;
+import org.sigmah.shared.dto.category.CategoryTypeDTO;
+import org.sigmah.shared.dto.element.BudgetSubFieldDTO;
 import org.sigmah.shared.dto.element.FlexibleElementDTO;
+import org.sigmah.shared.dto.layout.LayoutGroupDTO;
+import org.sigmah.shared.dto.profile.PrivacyGroupDTO;
+import org.sigmah.shared.dto.referential.ContactModelType;
+import org.sigmah.shared.dto.referential.DefaultContactFlexibleElementType;
+import org.sigmah.shared.dto.referential.DefaultFlexibleElementType;
+import org.sigmah.shared.dto.referential.ElementTypeEnum;
 import org.sigmah.shared.dto.referential.LogicalElementType;
+import org.sigmah.shared.dto.referential.TextAreaType;
+import org.sigmah.shared.dto.report.ReportModelDTO;
 
 /**
  * {@link EditFlexibleElementAdminPresenter}'s view implementation.
@@ -149,11 +145,19 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 
 	private FlexTable budgetFields;
 	private FlexTable ratioFlexTable;
+	
+	private ComboBox<FlexibleElementDTO> budgetSubFieldSpentCombo;
+	private ComboBox<FlexibleElementDTO> budgetSubFieldPlannedCombo;
+	private ListStore<FlexibleElementDTO> budgetSubFieldSpentStore;
+	private ListStore<FlexibleElementDTO> budgetSubFieldPlannedStore;
+	
 	private ComboBox<BudgetSubFieldDTO> upBudgetSubFieldCombo;
 	private ComboBox<BudgetSubFieldDTO> downBudgetSubFieldCombo;
 	private ListStore<BudgetSubFieldDTO> upBudgetSubFieldStore;
 	private ListStore<BudgetSubFieldDTO> downBudgetSubFieldStore;
 	private Anchor anchorAddSubField;
+	
+	
 	
     // --
     // Computation specific fields.
@@ -164,6 +168,16 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 	private com.extjs.gxt.ui.client.widget.Label codeGridHeaderLabel;
     private com.extjs.gxt.ui.client.widget.grid.Grid<FlexibleElementDTO> codeGrid;
     private HasGrid.GridEventHandler<FlexibleElementDTO> codeGridEventHandler;
+
+	// --
+	// Contact list specific fields.
+	// --
+	private ComboBox<EnumModel<ContactModelType>> contactTypeField;
+	private ClearableField<EnumModel<ContactModelType>> contactTypeClearableField;
+	private ListComboBox<ContactModelDTO> contactModelsField;
+	private AdapterField contactModelsContainer;
+	private TextField<Number> contactNumberLimit;
+	private CheckBox contactIsMember;
 
 	// --
 	// Other components.
@@ -237,10 +251,12 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 
 		textAreaFields = new HashSet<Field<?>>();
 
-		bannerField = Forms.checkbox("", null, I18N.CONSTANTS.Admin_BANNER(), false);
+		// No label for the moment as it depends on the model type
+		bannerField = Forms.checkbox("", null, "", false);
 		bannerField.setFireChangeEventOnSetValue(true);
 
-		bannerPositionField = Forms.simpleCombobox(I18N.CONSTANTS.adminFlexibleBannerPosition(), false);
+		// No label for the moment as it depends on the model type
+		bannerPositionField = Forms.simpleCombobox("", false);
 		bannerPositionField.disable();
 
 		lengthField = Forms.number(I18N.CONSTANTS.adminFlexibleLength(), false);
@@ -277,9 +293,6 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 		// specific properties for budget field
 		// --
 
-		upBudgetSubFieldStore = new ListStore<BudgetSubFieldDTO>();
-		downBudgetSubFieldStore = new ListStore<BudgetSubFieldDTO>();
-
 		budgetFields = new FlexTable();
 		budgetFields.setVisible(false);
 		budgetFields.setCellSpacing(5);
@@ -296,6 +309,13 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 		anchorAddSubField.setVisible(false);
 
 		ratioFlexTable = new FlexTable();
+		
+		budgetSubFieldSpentStore = new ListStore<FlexibleElementDTO>();
+		budgetSubFieldPlannedStore = new ListStore<FlexibleElementDTO>();
+		
+		budgetSubFieldSpentCombo = Forms.combobox(I18N.CONSTANTS.flexibleElementBudgetDistributionRatio(), true, FlexibleElementDTO.ID, FlexibleElementDTO.LABEL, budgetSubFieldSpentStore);
+		budgetSubFieldPlannedCombo = Forms.combobox(I18N.CONSTANTS.projectPlannedBudget(), true, FlexibleElementDTO.ID, FlexibleElementDTO.LABEL, budgetSubFieldPlannedStore);
+		
 
 		upBudgetSubFieldCombo = new ComboBox<BudgetSubFieldDTO>();
 		upBudgetSubFieldCombo.setDisplayField("label");
@@ -332,6 +352,17 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
         codeGridHeaderLabel = new com.extjs.gxt.ui.client.widget.Label(I18N.CONSTANTS.adminFlexibleComputationCodeGridHeader());
         codeGridHeaderLabel.addStyleName(STYLE_FORM_ITEM);
         
+		// --
+		// Specific fields for contact list fields
+		// --
+		contactTypeField = Forms.combobox(I18N.CONSTANTS.adminFlexibleElementContactListTypeFilter(), false, EnumModel.VALUE_FIELD, EnumModel.DISPLAY_FIELD);
+		contactTypeClearableField = new ClearableField<EnumModel<ContactModelType>>(contactTypeField);
+		contactModelsField = new ListComboBox<ContactModelDTO>(ContactModelDTO.ID, ContactModelDTO.NAME);
+		contactModelsField.initComponent();
+		contactModelsContainer = Forms.adapter(I18N.CONSTANTS.adminFlexibleElementContactListModelFilter(), contactModelsField);
+		contactNumberLimit = Forms.number(I18N.CONSTANTS.adminFlexibleElementContactListLimit(), false, false, false);
+		contactIsMember = Forms.checkbox("", null, I18N.CONSTANTS.adminFlexibleElementContactListIsMember(), false);
+        
 		// Form initialization.
 		specificForm = Forms.panel(150);
 		specificForm.add(bannerField);
@@ -353,10 +384,16 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 		specificForm.add(customChoicesField);
 		specificForm.add(codeGridHeaderLabel);
 		specificForm.add(codeGrid);
+		specificForm.add(contactNumberLimit);
+		specificForm.add(contactTypeClearableField);
+		specificForm.add(contactIsMember);
+		specificForm.add(contactModelsContainer);
 
 		specificForm.add(budgetFields);
 		specificForm.add(anchorAddSubField);
 		specificForm.add(ratioFlexTable);
+		specificForm.add(budgetSubFieldSpentCombo);
+		specificForm.add(budgetSubFieldPlannedCombo);
 		// --
 		// Other components.
 		// --
@@ -636,6 +673,21 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 	 * {@inheritDoc}
 	 */
 	@Override
+	public ComboBox<FlexibleElementDTO> getBudgetSubFieldSpentCombo(){
+		return budgetSubFieldSpentCombo;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ComboBox<FlexibleElementDTO> getBudgetSubFieldPlannedCombo(){
+		return budgetSubFieldPlannedCombo;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public ComboBox<BudgetSubFieldDTO> getUpBudgetSubFieldCombo() {
 		return upBudgetSubFieldCombo;
 	}
@@ -654,6 +706,21 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 	@Override
 	public ListStore<BudgetSubFieldDTO> getUpBudgetSubFieldStore() {
 		return upBudgetSubFieldStore;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ListStore<FlexibleElementDTO> getBudgetSubFieldPlannedStore() {
+		return budgetSubFieldPlannedStore;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ListStore<FlexibleElementDTO> getBudgetSubFieldSpentStore() {
+		return budgetSubFieldSpentStore;
 	}
 
 	/**
@@ -678,6 +745,26 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 	@Override
 	public TextField<String> getFormulaField() {
 		return formulaField;
+	}
+
+	@Override
+	public ComboBox<EnumModel<ContactModelType>> getContactListTypeFilter() {
+		return contactTypeField;
+	}
+
+	@Override
+	public ListComboBox<ContactModelDTO> getContactListModelsFilter() {
+		return contactModelsField;
+	}
+
+	@Override
+	public TextField<Number> getContactListLimit() {
+		return contactNumberLimit;
+	}
+
+	@Override
+	public CheckBox getContactIsMember() {
+		return contactIsMember;
 	}
 
     /**
@@ -807,15 +894,25 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
 				break;
 
 			case DEFAULT:
-
 				bannerField.show();
 				bannerPositionField.show();
-                
+				
                 if (type == DefaultFlexibleElementType.BUDGET) {
                     budgetFields.setVisible(true);
                     anchorAddSubField.setVisible(true);
                     ratioFlexTable.setVisible(true);
+                }else if (type == DefaultFlexibleElementType.BUDGET_RATIO) {
+					budgetSubFieldSpentCombo.setVisible(true);
+					budgetSubFieldPlannedCombo.setVisible(true);
                 }
+				break;
+
+			case DEFAULT_CONTACT:
+
+				bannerField.show();
+				if (type != DefaultContactFlexibleElementType.PHOTO) {
+					bannerPositionField.show();
+				}
 				break;
 
 			case FILES_LIST:
@@ -839,6 +936,11 @@ public class EditFlexibleElementAdminView extends AbstractPopupView<PopupWidget>
                 setTextAreaSpecificFieldsVisibility(elementType.toTextAreaType());
 				break;
 
+			case CONTACT_LIST:
+				contactNumberLimit.show();
+				contactTypeClearableField.show();
+				contactModelsContainer.show();
+				break;
 			default:
 				break;
 		}

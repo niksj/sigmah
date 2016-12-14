@@ -22,6 +22,7 @@ package org.sigmah.client.computation;
  * #L%
  */
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.extjs.gxt.ui.client.widget.Component;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.google.inject.Inject;
@@ -34,6 +35,10 @@ import org.sigmah.client.ui.widget.Loadable;
 import org.sigmah.client.ui.widget.form.StringField;
 import org.sigmah.offline.sync.SuccessCallback;
 import org.sigmah.shared.computation.Computation;
+import org.sigmah.shared.computation.dependency.Dependency;
+import org.sigmah.shared.computation.dependency.SingleDependency;
+import org.sigmah.shared.dto.ContactDTO;
+import org.sigmah.shared.dto.ContactModelDTO;
 import org.sigmah.shared.dto.IsModel;
 import org.sigmah.shared.dto.OrgUnitModelDTO;
 import org.sigmah.shared.dto.ProjectDTO;
@@ -41,6 +46,7 @@ import org.sigmah.shared.dto.ProjectModelDTO;
 import org.sigmah.shared.dto.element.ComputationElementDTO;
 import org.sigmah.shared.dto.element.FlexibleElementContainer;
 import org.sigmah.shared.dto.element.FlexibleElementDTO;
+import org.sigmah.shared.dto.element.HistoryWrapper;
 import org.sigmah.shared.dto.element.event.ValueEvent;
 import org.sigmah.shared.dto.element.event.ValueHandler;
 import org.sigmah.shared.dto.orgunit.OrgUnitDTO;
@@ -81,6 +87,8 @@ public class ComputationTriggerManager {
 			final ComputationElementDTO computationElement = localizedElement.getElement();
 			prepareForComputationElement(computationElement, model);
 		}
+		
+		// TODO: Chercher les ComputationField des projets liés et appeler prepareForComputationElement.
 	}
 
 	/**
@@ -100,6 +108,24 @@ public class ComputationTriggerManager {
 		for (final OrgUnitDTO.LocalizedElement localizedElement : orgUnit.getLocalizedElements(ComputationElementDTO.class)) {
 			final ComputationElementDTO computationElement = (ComputationElementDTO) localizedElement.getElement();
 			prepareForComputationElement(computationElement, model);
+		}
+	}
+
+	/**
+	 * Prepare the trigger manager.
+	 *
+	 * @param contactDTO
+	 *          Contact to display.
+	 */
+	public void prepareForContact(ContactDTO contactDTO) {
+
+		this.container = contactDTO;
+
+		clearMaps();
+
+		for (final ContactDTO.LocalizedElement localizedElement : contactDTO.getLocalizedElements(ComputationElementDTO.class)) {
+			final ComputationElementDTO computationElement = (ComputationElementDTO) localizedElement.getElement();
+			prepareForComputationElement(computationElement, contactDTO.getContactModel());
 		}
 	}
 
@@ -125,12 +151,15 @@ public class ComputationTriggerManager {
 		final Computation computation = computationElement.getComputationForModel(model);
 		computations.put(computationElement, computation);
 
-		for (final FlexibleElementDTO dependency : computation.getDependencies()) {
+		for (final Dependency dependency : computation.getDependencies()) {
 			List<ComputationElementDTO> list = dependencies.get(dependency);
 
 			if (list == null) {
 				list = new ArrayList<ComputationElementDTO>();
-				dependencies.put(dependency, list);
+				
+				if (dependency instanceof SingleDependency) {
+					dependencies.put(((SingleDependency) dependency).getFlexibleElement(), list);
+				}
 			}
 
 			list.add(computationElement);
@@ -150,11 +179,24 @@ public class ComputationTriggerManager {
 	 */
 	public void listenToValueChangesOfElement(final FlexibleElementDTO element, final Component component, final List<ValueEvent> modifications) {
 
+		if (component == null) {
+			Log.trace("Element '" + element.getId() + "' is not accessible by the current user.");
+			return;
+		}
+		
 		if (element instanceof ComputationElementDTO) {
-			components.put(element, (Field<String>) component);
-			elementsWithHandlers.put(element.getId(), (ComputationElementDTO) element);
+			StringField stringField = null;
+			if (component instanceof StringField) {
+				stringField = (StringField) component;
+			} else if (component instanceof HistoryWrapper && ((HistoryWrapper) component).getField() instanceof StringField) {
+				stringField = (StringField) ((HistoryWrapper) component).getField();
+			}
+			if (stringField != null) {
+				components.put(element, stringField);
+				elementsWithHandlers.put(element.getId(), (ComputationElementDTO) element);
 
-			initialUpdateIfCurrentValueIsEmpty((ComputationElementDTO) element, (StringField) component);
+				initialUpdateIfCurrentValueIsEmpty((ComputationElementDTO) element, stringField);
+			}
 		}
 
 		final List<ComputationElementDTO> computationElements = dependencies.get(element);
@@ -178,7 +220,7 @@ public class ComputationTriggerManager {
 	 * @param component
 	 *          Component associated to the given element.
 	 */
-	private void initialUpdateIfCurrentValueIsEmpty(final ComputationElementDTO computationElement, final StringField field) {
+	private void initialUpdateIfCurrentValueIsEmpty(final ComputationElementDTO computationElement, final Field<String> field) {
 
 		if (field.getValue() == null || field.getValue().isEmpty()) {
 			updateComputation(computationElement, new ArrayList<ValueEvent>(), false);

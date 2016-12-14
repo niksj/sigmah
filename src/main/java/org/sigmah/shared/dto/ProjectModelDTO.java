@@ -166,7 +166,7 @@ public class ProjectModelDTO extends AbstractModelDataEntityDTO<Integer> impleme
 	 *
 	 * @author tmi (v1.3)
 	 */
-	protected static class LocalizedElement<E extends FlexibleElementDTO> {
+	public static class LocalizedElement<E extends FlexibleElementDTO> {
 
 		private final PhaseModelDTO phaseModel;
 		private final E element;
@@ -445,7 +445,8 @@ public class ProjectModelDTO extends AbstractModelDataEntityDTO<Integer> impleme
 						|| ElementTypeEnum.CHECKBOX == type
 						|| ElementTypeEnum.TEXT_AREA == type
 						|| ElementTypeEnum.TRIPLETS == type
-						|| ElementTypeEnum.QUESTION == type) {
+						|| ElementTypeEnum.QUESTION == type
+						|| ElementTypeEnum.CONTACT_LIST == type) {
 						allElements.add(element);
 					}
 				}
@@ -469,7 +470,8 @@ public class ProjectModelDTO extends AbstractModelDataEntityDTO<Integer> impleme
 						|| ElementTypeEnum.CHECKBOX == type
 						|| ElementTypeEnum.TEXT_AREA == type
 						|| ElementTypeEnum.TRIPLETS == type
-						|| ElementTypeEnum.QUESTION == type) {
+						|| ElementTypeEnum.QUESTION == type
+						|| ElementTypeEnum.CONTACT_LIST == type) {
 						allElements.add(element);
 					}
 				}

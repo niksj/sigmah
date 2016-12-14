@@ -47,7 +47,7 @@ public class Sigmah implements EntryPoint {
 	 * Version number. Hard coded to avoid querying the server to identify
 	 * the current version number.
 	 */
-	public static final String VERSION = "2.0.2";
+	public static final String VERSION = "2.2-SNAPSHOT";
 
 	/**
 	 * GIN injector.
@@ -64,22 +64,17 @@ public class Sigmah implements EntryPoint {
 			Log.debug("Application > Client init start.");
 		}
 		
-		Profiler.INSTANCE.startScenario(Scenario.LOGIN);
-
 		// Listening ApplicationCache events.
 		// Done early to avoid missing some events and to keep track of the
 		// last update date.
 		ApplicationCacheManager.ensureHandlers();
 		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "ApplicationCacheManager.ensureHandlers() ended.");
-
 		// GIN injector instantiation.
 		if (Log.isDebugEnabled()) {
 			Log.debug("Application > Creates GIN injector.");
 		}
 		injector = GWT.create(Injector.class);
 		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "Injector creation ended.");
 
 		// Set GXT theme.
 		if (Log.isDebugEnabled()) {
@@ -87,7 +82,6 @@ public class Sigmah implements EntryPoint {
 		}
 		GXT.setDefaultTheme(injector.getTheme(), true);
 		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "GXT initialization ended.");
 
 		// Uncaught exception handler.
 		GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
@@ -101,8 +95,6 @@ public class Sigmah implements EntryPoint {
 				N10N.error("An unexpected error has occured.");
 			}
 		});
-		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "UncaughtExceptionHandler definition ended.");
 
 		clientInitializing();
 		
@@ -112,7 +104,6 @@ public class Sigmah implements EntryPoint {
 		if (Log.isDebugEnabled()) {
 			Log.debug("Application > Client init end.");
 		}
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "Initialization ended.");
 
 	}
 
@@ -128,18 +119,12 @@ public class Sigmah implements EntryPoint {
 		// Offline dispatcher
 		injector.getLocalDispatch();
 		injector.getApplicationStateManager();
-		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "Offline dispatcher initialization ended.");
-
 		// Application presenters.
 		injector.getApplicationPresenter();
 		injector.getHomePresenter();
 		injector.getMockUpPresenter();
 		injector.getCreditsPresenter();
 		injector.getHelpPresenter();
-		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "Application presenters initialization ended.");
-
 		// Zones.
 		injector.getOrganizationBannerPresenter();
 		injector.getAuthenticationBannerPresenter();
@@ -148,8 +133,6 @@ public class Sigmah implements EntryPoint {
 		injector.getMenuBannerPresenter();
 		injector.getMessageBannerPresenter();
 		
-		Profiler.INSTANCE.markCheckpoint(Scenario.LOGIN, "Zone presenters initialization ended.");
-
 		// Pages.
 		injector.getLoginPresenter();
 		injector.getLostPasswordPresenter();
@@ -167,6 +150,8 @@ public class Sigmah implements EntryPoint {
 		injector.getProjectIndicatorMapPresenter();
 		injector.getEditIndicatorPresenter();
 		injector.getEditSitePresenter();
+		injector.getExportContactsPresenter();
+		injector.getExportContactsSettingPresenter();
 		injector.getExportProjectsPresenter();
 		injector.getExportProjectsSettingPresenter();
 		injector.getProjectCoreRenameVersionPresenter();
@@ -195,6 +180,8 @@ public class Sigmah implements EntryPoint {
 		injector.getAddOrgUnitModelAdminPresenter();
 		injector.getProjectModelsAdminPresenter();
 		injector.getAddProjectModelAdminPresenter();
+		injector.getContactModelsAdminPresenter();
+		injector.getAddContactModelAdminPresenter();
 		injector.getReportModelsAdminPresenter();
 		injector.getEditPhaseModelAdminPresenter();
 		injector.getEditLayoutGroupAdminPresenter();
@@ -212,6 +199,11 @@ public class Sigmah implements EntryPoint {
 		injector.getOrgUnitDetailsPresenter();
 		injector.getOrgUnitReportsPresenter();
 		injector.getAddImportationSchemePresenter();
+
+		injector.getContactPresenter();
+		injector.getContactDetailsPresenter();
+		injector.getContactRelationshipsPresenter();
+		injector.getContactHistoryPresenter();
 
 		injector.getFileSelectionPresenter();
 

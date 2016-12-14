@@ -207,8 +207,10 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 		 *          The indicator field.
 		 * @param logFrameField
 		 *          The log frame field.
+		 * @param contactsField
+		 *          The contacts field.
 		 */
-		void onExportProject(Field<Boolean> indicatorField, Field<Boolean> logFrameField);
+		void onExportProject(Field<Boolean> indicatorField, Field<Boolean> logFrameField, Field<Boolean> contactsField);
 
 	}
 
@@ -253,6 +255,8 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 			public void onSubMenuClick(final SubMenuItem menuItem) {
 
 				final PageRequest currentPageRequest = injector.getPageManager().getCurrentPageRequest(false);
+				Profiler.INSTANCE.startScenario(Scenario.AGENDA);	
+				Profiler.INSTANCE.markCheckpoint(Scenario.AGENDA, "Before navigateRequest");
 				eventBus.navigateRequest(menuItem.getRequest().addAllParameters(currentPageRequest.getParameters(false)));
 			}
 		});
@@ -405,7 +409,7 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 
 		// Updates sub-menu widget.
 		view.getSubMenuWidget().initializeMenu(subPageRequest.getPage(), auth());
-
+		Profiler.INSTANCE.markCheckpoint(Scenario.OPEN_PROJECT, "End initializeMenu");
 		// Updates delete button enabled state.
 		final boolean canDeleteProject = canDeleteProject();
 		view.getDeleteButton().setEnabled(canDeleteProject);
@@ -416,9 +420,10 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 
 		// Updates parent view elements.
 		loadAmendments(project, coreVersionId);
+		Profiler.INSTANCE.markCheckpoint(Scenario.OPEN_PROJECT, "End loadAmendments");
 		refreshBanner(project);
-		
-		Profiler.INSTANCE.endScenario(Scenario.OPEN_PROJECT);
+		Profiler.INSTANCE.markCheckpoint(Scenario.OPEN_PROJECT, "End refreshBanner");
+		//Profiler.INSTANCE.endScenario(Scenario.OPEN_PROJECT);
 	}
 
 	/**
@@ -742,6 +747,7 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 					final DefaultFlexibleElementDTO defaultElement = (DefaultFlexibleElementDTO) element;
 					defaultElement.setService(dispatch);
 					defaultElement.setAuthenticationProvider(injector.getAuthenticationProvider());
+					defaultElement.setEventBus(eventBus);
 					defaultElement.setCache(injector.getClientCache());
 					defaultElement.setCurrentContainerDTO(project);
 
@@ -846,28 +852,30 @@ public class ProjectPresenter extends AbstractPresenter<ProjectPresenter.View> i
 		view.buildExportDialog(new ExportActionHandler() {
 
 			@Override
-			public void onExportProject(final Field<Boolean> indicatorField, final Field<Boolean> logFrameField) {
+			public void onExportProject(final Field<Boolean> indicatorField, final Field<Boolean> logFrameField, final Field<Boolean> contactsField) {
 
 				final ServletUrlBuilder urlBuilder =
 						new ServletUrlBuilder(injector.getAuthenticationProvider(), injector.getPageManager(), Servlet.EXPORT, ServletMethod.EXPORT_PROJECT);
 
 				final ExportType type;
 
-				if (indicatorField.getValue() && logFrameField.getValue()) {
+				if (indicatorField.getValue()) {
+					if (logFrameField.getValue()) {
 					type = ExportType.PROJECT_SYNTHESIS_LOGFRAME_INDICATORS;
-
-				} else if (indicatorField.getValue() && !logFrameField.getValue()) {
+					} else {
 					type = ExportType.PROJECT_SYNTHESIS_INDICATORS;
-
-				} else if (!indicatorField.getValue() && logFrameField.getValue()) {
+					}
+				} else {
+					if (logFrameField.getValue()) {
 					type = ExportType.PROJECT_SYNTHESIS_LOGFRAME;
-
 				} else {
 					type = ExportType.PROJECT_SYNTHESIS;
+				}
 				}
 
 				urlBuilder.addParameter(RequestParameter.ID, project.getId());
 				urlBuilder.addParameter(RequestParameter.TYPE, type);
+				urlBuilder.addParameter(RequestParameter.WITH_CONTACTS, contactsField.getValue());
 
 				final FormElement form = FormElement.as(DOM.createForm());
 				form.setAction(urlBuilder.toString());

@@ -30,7 +30,6 @@ import org.sigmah.server.dao.*;
 import org.sigmah.server.dao.impl.*;
 import org.sigmah.server.dao.util.SQLDialect;
 import org.sigmah.server.dao.util.SQLDialectProvider;
-import org.sigmah.server.domain.FrameworkFulfillment;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +38,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import org.sigmah.server.dao.PivotDAO;
+import org.sigmah.server.dao.ProjectFundingDAO;
 import org.sigmah.server.dao.impl.PivotHibernateDAO;
+import org.sigmah.server.dao.impl.ProjectFundingHibernateDAO;
 
 /**
  * Abstract module providing methods to install the DAO-layer interfaces.
@@ -79,13 +80,20 @@ public class PersistenceModule extends AbstractModule {
 		bind(AdminDAO.class).to(AdminHibernateDAO.class).in(Singleton.class);
 		bind(AmendmentDAO.class).to(AmendmentHibernateDAO.class).in(Singleton.class);
 		bind(AuthenticationDAO.class).to(AuthenticationHibernateDAO.class).in(Singleton.class);
+		bind(ContactDAO.class).to(ContactHibernateDAO.class);
+		bind(ContactModelDAO.class).to(ContactModelHibernateDAO.class).in(Singleton.class);
 		bind(CountryDAO.class).to(CountryHibernateDAO.class).in(Singleton.class);
 		bind(FileDAO.class).to(FileHibernateDAO.class).in(Singleton.class);
+		bind(FlexibleElementDAO.class).to(FlexibleElementHibernateDAO.class).in(Singleton.class);
 		bind(FrameworkDAO.class).to(FrameworkHibernateDAO.class).in(Singleton.class);
 		bind(FrameworkFulfillmentDAO.class).to(FrameworkFulfillmentHibernateDAO.class).in(Singleton.class);
+		bind(GlobalContactExportSettingsDAO.class).to(GlobalContactExportSettingsHibernateDAO.class).in(Singleton.class);
 		bind(GlobalExportDAO.class).to(GlobalExportHibernateDAO.class).in(Singleton.class);
 		bind(GlobalExportSettingsDAO.class).to(GlobalExportSettingsHibernateDAO.class).in(Singleton.class);
+		bind(HistoryTokenDAO.class).to(HistoryTokenHibernateDAO.class).in(Singleton.class);
 		bind(IndicatorDAO.class).to(IndicatorHibernateDAO.class).in(Singleton.class);
+		bind(LayoutGroupDAO.class).to(LayoutGroupHibernateDAO.class).in(Singleton.class);
+		bind(LayoutGroupIterationDAO.class).to(LayoutGroupIterationHibernateDAO.class).in(Singleton.class);
 		bind(LocationDAO.class).to(LocationHibernateDAO.class).in(Singleton.class);
 		bind(LocationTypeDAO.class).to(LocationTypeHibernateDAO.class).in(Singleton.class);
 		bind(MonitoredPointDAO.class).to(MonitoredPointHibernateDAO.class).in(Singleton.class);
@@ -102,19 +110,21 @@ public class PersistenceModule extends AbstractModule {
 		bind(PrivacyGroupDAO.class).to(PrivacyGroupHibernateDAO.class).in(Singleton.class);
 		bind(ProfileDAO.class).to(ProfileHibernateDAO.class).in(Singleton.class);
 		bind(ProjectDAO.class).to(ProjectHibernateDAO.class).in(Singleton.class);
+		bind(ProjectFundingDAO.class).to(ProjectFundingHibernateDAO.class).in(Singleton.class);
 		bind(ProjectBannerDAO.class).to(ProjectBannerHibernateDAO.class).in(Singleton.class);
 		bind(ProjectDetailsDAO.class).to(ProjectDetailsHibernateDAO.class).in(Singleton.class);
 		bind(ProjectModelDAO.class).to(ProjectModelHibernateDAO.class).in(Singleton.class);
 		bind(ProjectReportDAO.class).to(ProjectReportHibernateDAO.class).in(Singleton.class);
+		bind(QuestionChoiceElementDAO.class).to(QuestionChoiceElementHibernateDAO.class).in(Singleton.class);
 		bind(ReminderDAO.class).to(ReminderHibernateDAO.class).in(Singleton.class);
 		bind(ReminderListDAO.class).to(ReminderListHibernateDAO.class).in(Singleton.class);
 		bind(ReportDefinitionDAO.class).to(ReportDefinitionHibernateDAO.class).in(Singleton.class);
 		bind(ReportingPeriodDAO.class).to(ReportingPeriodHibernateDAO.class).in(Singleton.class);
 		bind(SiteDAO.class).to(SiteHibernateDAO.class).in(Singleton.class);
 		bind(SiteTableDAO.class).to(SiteTableHibernateDAO.class).in(Singleton.class);
+		bind(TripletValueDAO.class).to(TripletValueHibernateDAO.class).in(Singleton.class);
 		bind(UserDAO.class).to(UserHibernateDAO.class).in(Singleton.class);
 		bind(UserDatabaseDAO.class).to(UserDatabaseHibernateDAO.class).in(Singleton.class);
-		bind(UserPermissionDAO.class).to(UserPermissionHibernateDAO.class).in(Singleton.class);
 		bind(UserUnitDAO.class).to(UserUnitDAOImpl.class).in(Singleton.class);
 		bind(ValueDAO.class).to(ValueHibernateDAO.class).in(Singleton.class);
 

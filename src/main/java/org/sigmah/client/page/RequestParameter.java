@@ -34,6 +34,11 @@ public enum RequestParameter {
 
 	ID(true),
 	TYPE,
+	WITH_CONTACTS,
+	WITH_CHARACTERISTICS,
+	WITH_ALL_RELATIONS,
+	WITH_FRAMEWORK_RELATIONS,
+	WITH_RELATIONS_BY_ELEMENT,
 	HEADER,
 	CONTENT,
 	REPORT_ID,
@@ -58,7 +63,9 @@ public enum RequestParameter {
 	SHOW_BRIEFLY,
 	PULL_DATABASE,
 	CLOSE_CURRENT_TAB,
-    ELEMENTS;
+	CONTACT_ID,
+    ELEMENTS,
+	PROJECT_ID;
 
 	// If the parameter is part of the tab uniqueness logic.
 	private final boolean unique;

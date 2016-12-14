@@ -28,6 +28,7 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.sigmah.server.dispatch.CommandHandler;
+import org.sigmah.server.domain.Contact;
 import org.sigmah.server.domain.OrgUnit;
 import org.sigmah.server.domain.Organization;
 import org.sigmah.server.domain.Project;
@@ -44,7 +45,9 @@ import org.sigmah.shared.dto.profile.PrivacyGroupDTO;
 import org.sigmah.shared.dto.profile.ProfileDTO;
 import org.sigmah.shared.dto.referential.GlobalPermissionEnum;
 import org.sigmah.shared.dto.referential.PrivacyGroupPermissionEnum;
+import org.sigmah.shared.security.UnauthorizedAccessException;
 import org.sigmah.shared.util.Month;
+import org.sigmah.shared.util.OrgUnitUtils;
 
 /**
  * Convenient methods for {@link CommandHandler} implementations.
@@ -62,13 +65,13 @@ public final class Handlers {
 
 		final Calendar c1 = Calendar.getInstance();
 		c1.setTime(date1);
-		if (c1.get(Calendar.DAY_OF_MONTH) != 1) {
+		if (c1.get(Calendar.DAY_OF_MONTH) != 5) {
 			return null;
 		}
 
 		final Calendar c2 = Calendar.getInstance();
 		c2.setTime(date2);
-		if (c2.get(Calendar.DAY_OF_MONTH) != c2.getActualMaximum(Calendar.DAY_OF_MONTH)) {
+		if (c2.get(Calendar.DAY_OF_MONTH) != c2.getActualMaximum(Calendar.DAY_OF_MONTH) - 5) {
 			return null;
 		}
 
@@ -244,59 +247,25 @@ public final class Handlers {
 	}
 
 	public static boolean isProjectAccessible(Project project, User user, boolean edition) {
+		
 		// Checks that the project is not deleted
 		if (project.isDeleted()) {
 			return false;
 		}
 
 		// Owner.
-		if (project.getOwner() != null) {
-			if (project.getOwner().getId().equals(user.getId())) {
-				return true;
-			}
+		final User owner = project.getOwner();
+		if (owner != null && owner.getId().equals(user.getId())) {
+			return true;
 		}
 
 		// Manager.
-		if (project.getManager() != null) {
-			if (project.getManager().getId().equals(user.getId())) {
-				return true;
-			}
+		final User manager = project.getManager();
+		if (manager != null && manager.getId().equals(user.getId())) {
+			return true;
 		}
 
-		// Checks that the user can see this project.
-		// let's get the nearest OrgUnitProfile from the target OrgUnit
-		int minDistance = Integer.MAX_VALUE;
-		OrgUnitProfile targetedOrgUnitProfile = null;
-		for (OrgUnitProfile orgUnitProfile : user.getOrgUnitsWithProfiles()) {
-			if (Objects.equals(orgUnitProfile.getOrgUnit().getId(), project.getOrgUnit().getId())) {
-				// This OrgUnitProfile is directly related to the targeted OrgUnit, so he is obviously the nearest OrgUnitProfile
-				targetedOrgUnitProfile = orgUnitProfile;
-					break;
-				}
-
-			if (minDistance == 1) {
-				// The nearest OrgUnitProfile is either the current one or a OrgUnitProfile directly related to the targeted OrgUnit
-				continue;
-			}
-
-			List<OrgUnit> orgUnits = new ArrayList<>();
-			crawlUnits(orgUnitProfile.getOrgUnit(), orgUnits, false);
-			int currentDistance = 1;
-			for (OrgUnit orgUnit : orgUnits) {
-				// This loop is over the distance of the currently selected OrgUnitProfile
-				if (currentDistance >= minDistance) {
-				break;
-			}
-
-				if (Objects.equals(orgUnit.getId(), project.getOrgUnit().getId())) {
-					targetedOrgUnitProfile = orgUnitProfile;
-					minDistance = currentDistance;
-					break;
-		}
-
-				currentDistance++;
-			}
-		}
+		OrgUnitProfile targetedOrgUnitProfile = getTargetedOrgUnitProfile(project.getOrgUnit().getId(), user);
 		if (targetedOrgUnitProfile == null) {
 			return false;
 		}
@@ -342,6 +311,61 @@ public final class Handlers {
 	}
 
 	/**
+	 *
+	 * @param contact The contact to check
+	 * @param user The user attempting to access contact data
+	 * @param contactProjects The projects related to the contact
+	 * @param edition Does the user need right access?
+	 * @return true if the contact is accessible for the user attempting to access contact data
+   */
+	public static boolean isContactAccessible(Contact contact, User user, List<Project> contactProjects, boolean edition) {
+		if (contact.isDeleted()) {
+			return false;
+		}
+
+		if (Objects.equals(contact.getUser().getId(), user.getId())) {
+			return true;
+		}
+
+		List<OrgUnit> orgUnitsRelatedToContact = new ArrayList<>();
+		orgUnitsRelatedToContact.addAll(contact.getOrgUnits());
+		for (Project contactProject : contactProjects) {
+			orgUnitsRelatedToContact.add(contactProject.getOrgUnit());
+		}
+
+		// Get the list of profiles compatible with the contact
+		List<OrgUnitProfile> targetedOrgUnitProfiles = new ArrayList<>();
+		for (OrgUnit orgUnit : orgUnitsRelatedToContact) {
+			OrgUnitProfile targetedOrgUnitProfile = getTargetedOrgUnitProfile(orgUnit.getId(), user);
+			if (targetedOrgUnitProfile != null) {
+				targetedOrgUnitProfiles.add(targetedOrgUnitProfile);
+			}
+		}
+
+		if (targetedOrgUnitProfiles.isEmpty()) {
+			return false;
+		}
+
+		boolean canSeeContact = false;
+		boolean canEditContact = false;
+		for (OrgUnitProfile targetedOrgUnitProfile : targetedOrgUnitProfiles) {
+			for (Profile profile : targetedOrgUnitProfile.getProfiles()) {
+				for (GlobalPermission globalPermission : profile.getGlobalPermissions()) {
+					if (globalPermission.getPermission() == GlobalPermissionEnum.VIEW_VISIBLE_CONTACTS) {
+						canSeeContact = true;
+					} else if (globalPermission.getPermission() == GlobalPermissionEnum.EDIT_VISIBLE_CONTACTS) {
+						canEditContact = true;
+						// If the profile has EDIT_VISIBLE_CONTACT permission, it has VIEW_MY_CONTACTS too
+						canSeeContact = true;
+					}
+				}
+			}
+		}
+
+		return (!edition && canSeeContact) || (edition && canEditContact);
+	}
+
+	/**
 	 * Returns if the given {@code orgUnit} is visible to the given {@code user}.
 	 *
 	 * @param orgUnit
@@ -373,4 +397,111 @@ public final class Handlers {
 		return false;
 	}
 
+	/**
+	 * Utiliy to check the user's grant for a given permission.
+	 * 
+	 * @param userOrgUnit
+	 *			Link between user and orgunit to check.
+	 * @param permission
+	 *			Permission to search.
+	 * @return <code>true</code> if the given user is granted the given permission,
+	 * <code>false</code> otherwise.
+	 */
+	public static boolean isGranted(final OrgUnitProfile userOrgUnit, final GlobalPermissionEnum permission) {
+		List<Profile> profiles = userOrgUnit.getProfiles();
+
+		for (final Profile profile : profiles) {
+			if (profile.getGlobalPermissions() != null) {
+				for (final GlobalPermission p : profile.getGlobalPermissions()) {
+					if (p.getPermission().equals(permission)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public static boolean isGranted(List<OrgUnitProfile> userUnits, GlobalPermissionEnum permission) {
+		for (OrgUnitProfile userUnit : userUnits) {
+			if (isGranted(userUnit, permission)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isGranted(List<OrgUnitProfile> userUnits, OrgUnit targetOrgUnit, GlobalPermissionEnum permission) {
+		for (OrgUnitProfile userUnit : userUnits) {
+			if (!OrgUnitUtils.areOrgUnitsEqualOrParent(targetOrgUnit, userUnit.getOrgUnit().getId())) {
+				continue;
+			}
+			if (isGranted(userUnit, permission)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Asserts that the user has permission to modify the structure of the given database.
+	 * 
+	 * NOTE: Design privilege from Activity Info have been removed.
+	 * To satisfy this check a user must now be able to view the given database
+	 * and must have the {@link GlobalPermissionEnum#EDIT_INDICATOR} permission.
+	 * 
+	 * @param user
+	 *          The user for whom to check permissions.
+	 * @param project
+	 *          The project the user is trying to modify.
+	 * @throws UnauthorizedAccessException
+	 *           If the user does not have design permission.
+	 */
+	public static void assertDesignPrivileges(final User user, final Project project) throws UnauthorizedAccessException {
+		
+		if (!isGranted(user.getOrgUnitsWithProfiles(), GlobalPermissionEnum.EDIT_INDICATOR)) {
+			throw new UnauthorizedAccessException("Access denied to project '" + project.getId() + "'.");
+		}
+		if (!isProjectVisible(project, user)) {
+			throw new UnauthorizedAccessException("Project '" + project.getId() + "' is not visible by user '" + user.getEmail() + "'.");
+		}
+	}
+
+	private static OrgUnitProfile getTargetedOrgUnitProfile(Integer orgUnitIdRelatedToContainer, User user) {
+		// let's get the nearest OrgUnitProfile from the target OrgUnit
+		int minDistance = Integer.MAX_VALUE;
+		OrgUnitProfile targetedOrgUnitProfile = null;
+		for (OrgUnitProfile orgUnitProfile : user.getOrgUnitsWithProfiles()) {
+			if (Objects.equals(orgUnitProfile.getOrgUnit().getId(), orgUnitIdRelatedToContainer)) {
+				// This OrgUnitProfile is directly related to the targeted OrgUnit, so he is obviously the nearest OrgUnitProfile
+				targetedOrgUnitProfile = orgUnitProfile;
+				break;
+			}
+
+			if (minDistance == 1) {
+				// The nearest OrgUnitProfile is either the current one or a OrgUnitProfile directly related to the targeted OrgUnit
+				continue;
+			}
+
+			List<OrgUnit> orgUnits = new ArrayList<>();
+			crawlUnits(orgUnitProfile.getOrgUnit(), orgUnits, false);
+			int currentDistance = 1;
+			for (OrgUnit orgUnit : orgUnits) {
+				// This loop is over the distance of the currently selected OrgUnitProfile
+				if (currentDistance >= minDistance) {
+					break;
+				}
+
+				if (Objects.equals(orgUnit.getId(), orgUnitIdRelatedToContainer)) {
+					targetedOrgUnitProfile = orgUnitProfile;
+					minDistance = currentDistance;
+					break;
+				}
+
+				currentDistance++;
+			}
+		}
+		return targetedOrgUnitProfile;
+	}
 }

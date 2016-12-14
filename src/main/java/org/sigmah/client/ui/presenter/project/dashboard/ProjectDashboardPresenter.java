@@ -79,6 +79,8 @@ import com.google.inject.ImplementedBy;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.sigmah.client.ui.view.project.dashboard.LinkedProjectsColumnsProvider;
+import org.sigmah.client.util.profiler.Profiler;
+import org.sigmah.client.util.profiler.Scenario;
 import org.sigmah.shared.util.ProjectUtils;
 
 /**
@@ -229,7 +231,7 @@ public class ProjectDashboardPresenter extends AbstractProjectPresenter<ProjectD
 
 		final CheckColumnConfig remindersCheckPlugin = (CheckColumnConfig) view.getRemindersGrid().getColumnModel().getColumn(0);
 
-		// Removed the need to have "EDIT_ALL_PROJECTS" privilege to see reminders.
+		// Removed the need to have "EDIT_PROJECT" privilege to see reminders.
 		if (ProfileUtils.isGranted(auth(), GlobalPermissionEnum.EDIT_ALL_REMINDERS) || ProfileUtils.isGranted(auth(), GlobalPermissionEnum.EDIT_OWN_REMINDERS)) {
 			view.getRemindersGrid().addPlugin(remindersCheckPlugin);
 		}
@@ -301,7 +303,7 @@ public class ProjectDashboardPresenter extends AbstractProjectPresenter<ProjectD
 			 */
 			@Override
 			public boolean isAuthorizedToEditReminder() {
-				// BUGFIX #741: Removed the need to have "EDIT_ALL_PROJECTS" privilege to edit reminders.
+				// BUGFIX #741: Removed the need to have "EDIT_PROJECT" privilege to edit reminders.
 				return ProfileUtils.isGranted(auth(), GlobalPermissionEnum.EDIT_ALL_REMINDERS) ||
 					ProfileUtils.isGranted(auth(), GlobalPermissionEnum.EDIT_OWN_REMINDERS);
 			}
@@ -651,15 +653,8 @@ public class ProjectDashboardPresenter extends AbstractProjectPresenter<ProjectD
 
 			view.getFundingProjectsGrid().getStore().removeAll();
 
-			dispatch.execute(new GetLinkedProjects(getProject().getId(), LinkedProjectType.FUNDING_PROJECT, ProjectDTO.Mode._USE_PROJECT_MAPPER),
-				new CommandResultHandler<ListResult<ProjectFundingDTO>>() {
-
-					@Override
-					protected void onCommandSuccess(final ListResult<ProjectFundingDTO> result) {
-						view.getFundingProjectsGrid().getStore().add(result.getList());
-					}
-
-				}, new LoadingMask(view.getFundingProjectsGrid()));
+			// When getting linked projects using Hibernate : can't retrieve projects if not in organization due to domain filters
+			view.getFundingProjectsGrid().getStore().add(getProject().getFunding());
 		}
 
 		if (linkedProjectType == null || linkedProjectType == LinkedProjectType.FUNDED_PROJECT) {
@@ -670,15 +665,8 @@ public class ProjectDashboardPresenter extends AbstractProjectPresenter<ProjectD
 
 			view.getFundedProjectsGrid().getStore().removeAll();
 
-			dispatch.execute(new GetLinkedProjects(getProject().getId(), LinkedProjectType.FUNDED_PROJECT, ProjectDTO.Mode._USE_PROJECT_MAPPER),
-				new CommandResultHandler<ListResult<ProjectFundingDTO>>() {
-
-					@Override
-					protected void onCommandSuccess(final ListResult<ProjectFundingDTO> result) {
-						view.getFundedProjectsGrid().getStore().add(result.getList());
-					}
-
-				}, new LoadingMask(view.getFundedProjectsGrid()));
+			// When getting linked projects using Hibernate : can't retrieve projects if not in organization due to domain filters
+			view.getFundedProjectsGrid().getStore().add(getProject().getFunded());
 		}
 	}
 

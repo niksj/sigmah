@@ -54,6 +54,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.sigmah.client.dispatch.CommandResultHandler;
 import org.sigmah.client.dispatch.DispatchAsync;
@@ -372,9 +373,11 @@ public class ProjectPivotContainer extends ContentPanel implements Loadable {
 
 	public void loadProject(ProjectDTO project) {
 		this.currentDatabaseId = project.getId();
+		final Date startDate = project.getStartDate() != null ? project.getStartDate() : new Date();
+		
 		((IndicatorFilterCombo)indicatorFilter).setDatabaseId(currentDatabaseId);
 		((SiteFilterCombo)siteFilter).setDatabaseId(currentDatabaseId);
-		((DateFilterCombo)dateFilter).fillMonths(project.getStartDate());
+		((DateFilterCombo)dateFilter).fillMonths(startDate);
 		composer = new LayoutComposer(new GWTDates(), project);
 
 		pivotToDefault();
@@ -566,16 +569,8 @@ public class ProjectPivotContainer extends ContentPanel implements Loadable {
 			setUpdated(true);
 			setDirty(true);
 			if (event.getCell() != null) {
-				if (event.getCell().getCount() > 1) {
-					N10N.confirmation(I18N.CONSTANTS.confirmUpdate(), I18N.CONSTANTS.confirmUpdateOfAggregatedCell(), new ConfirmCallback() {
-
-						@Override
-						public void onAction() {
 							event.getRecord().set(event.getProperty(), event.getCell().getValue());
 						}
-					});
-				}
-			}
 		}
 	}
 

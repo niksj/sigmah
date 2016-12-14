@@ -66,6 +66,7 @@ public final class Computations {
             
         } catch (RuntimeException e) {
             // Exception is ignored.
+			e.printStackTrace();
             return new Computation(Collections.singletonList(
                     Instructions.getConstantWithValue(ComputationError.BAD_FORMULA)));
         }
@@ -114,6 +115,10 @@ public final class Computations {
 		final HashMap<String, FlexibleElementDTO> references = new HashMap<String, FlexibleElementDTO>();
 		
 		for (final FlexibleElementDTO element : allElements) {
+			// fields in iterative groups cannot be part of formula
+			if(element.getGroup() != null && element.getGroup().getHasIterations()) {
+				continue;
+			}
 			references.put(Instructions.ID_PREFIX + element.getId().toString(), element);
 			references.put(element.getCode(), element);
 		}
